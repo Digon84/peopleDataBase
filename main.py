@@ -10,6 +10,7 @@ unique ID in order to distinguish between entries.
 """
 import wx
 
+
 class PeopleDatabase(wx.Frame):
     """
     """
@@ -75,30 +76,25 @@ class PeopleDatabase(wx.Frame):
         self.SetStatusText("ver 1.1")
 
         # Add events to the buttons
-        self._pnl.Bind(wx.EVT_BUTTON, self._OnDeleteButton, self._deleteButton)
-        self._pnl.Bind(wx.EVT_BUTTON, self._OnAddButton, self._addButton)
-        self._pnl.Bind(wx.EVT_BUTTON, self._OnUpdateButton, self._updateButton)
-        self._pnl.Bind(wx.EVT_BUTTON, self._OnSaveButton, self._saveButton)
-        self._pnl.Bind(wx.EVT_BUTTON, self._OnLoadButton, self._loadButton)
+        self._pnl.Bind(wx.EVT_BUTTON, self.on_delete_button, self._deleteButton)
+        self._pnl.Bind(wx.EVT_BUTTON, self.on_add_button, self._addButton)
+        self._pnl.Bind(wx.EVT_BUTTON, self.on_update_button, self._updateButton)
+        self._pnl.Bind(wx.EVT_BUTTON, self.on_save_button, self._saveButton)
+        self._pnl.Bind(wx.EVT_BUTTON, self.on_load_button, self._loadButton)
 
-
-    def _OnDeleteButton(self, event):
+    def on_delete_button(self, event):
         pass
 
-
-    def _OnAddButton(self, event):
+    def on_add_button(self, event):
         pass
 
-
-    def _OnUpdateButton(self, event):
+    def on_update_button(self, event):
         pass
 
-
-    def _OnSaveButton(self, event):
+    def on_save_button(self, event):
         pass
 
-
-    def _OnLoadButton(self, event):
+    def on_load_button(self, event):
         pass
 
 if __name__ == '__main__':
