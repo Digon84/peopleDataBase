@@ -40,8 +40,8 @@ class PeopleDatabase(wx.Frame):
 
         # ID
         wx.StaticText(self._pnl, label="ID", pos=(220, 25))
-        self._idEditId = wx.TextCtrl(self._pnl, pos=(300, 20), size=(300, 25),
-                             style=wx.TE_READONLY)
+        self._idEditId = wx.TextCtrl(self._pnl, pos=(300, 20), size=(300, 25))
+        self._idEditId.Disable()
 
         # First Name
         wx.StaticText(self._pnl, label="First Name", pos=(220, 65))
@@ -118,7 +118,7 @@ class PeopleDatabase(wx.Frame):
         self._peopleList.Append([firstName, lastName])
 
     def set_person_details_fields(self, person, personId):
-        self._idEditId.SetLabelText(str(personId))
+        self._idEditId.SetValue(str(personId))
         if 'FirstName' in person:
             self._firstNameEditId.SetLabelText(person['FirstName'])
         if 'MiddleName' in person:
