@@ -29,7 +29,7 @@ class PeopleDatabase(wx.Frame):
         # people list
         self._peopleList = wx.ListCtrl(self._pnl, size=wx.Size(190, 225),
                                        pos=wx.Point(5, 20),
-                                       style=wx.LC_REPORT)
+                                       style=wx.LC_REPORT | wx.LC_SINGLE_SEL)
         self._peopleList.InsertColumn(0, ' First Name')
         self._peopleList.InsertColumn(1, ' Last Name')
         self._peopleList.Arrange()
@@ -105,13 +105,35 @@ class PeopleDatabase(wx.Frame):
         self.add_person_to_list(self._people[person_id]['FirstName'],
                                 self._people[person_id]['LastName'])
 
+        self._peopleList.Focus(self._peopleList.GetItemCount() - 1)
+        self._peopleList.Select(self._peopleList.GetItemCount() - 1)
+
+        self._addButton.Disable()
+        self._updateButton.Enable()
+
     def on_update_button(self, event):
+        person_id = int(self._idEditId.GetValue())
+        self._people[person_id]['FirstName'] = self._firstNameEditId.GetValue()
+        self._people[person_id]['MiddleName'] = self._middleNameEditId.GetValue()
+        self._people[person_id]['LastName'] = self._lastNameEditId.GetValue()
+        self._people[person_id]['Email'] = self._emailEditId.GetValue()
+        self._people[person_id]['Phone'] = self._phoneEditId.GetValue()
+
+        selected = self._peopleList.GetFirstSelected()
+        self._peopleList.SetStringItem(selected, 0, self._firstNameEditId.GetValue())
+        self._peopleList.SetStringItem(selected, 1, self._lastNameEditId.GetValue())
+
+
+        self._updateButton.Disable()
+        self._addButton.Enable()
+        self._saveButton.Enable()
         pass
 
     def on_save_button(self, event):
         pass
 
     def on_load_button(self, event):
+        self.print_people_details()
         pass
 
     def add_person_to_list(self, firstName, lastName):
@@ -120,21 +142,30 @@ class PeopleDatabase(wx.Frame):
     def set_person_details_fields(self, person, personId):
         self._idEditId.SetValue(str(personId))
         if 'FirstName' in person:
-            self._firstNameEditId.SetLabelText(person['FirstName'])
+            self._firstNameEditId.SetValue(person['FirstName'])
         if 'MiddleName' in person:
-            self._middleNameEditId.SetLabelText(person['MiddleName'])
+            self._middleNameEditId.SetValue(person['MiddleName'])
         if 'LastName' in person:
-            self._lastNameEditId.SetLabelText(person['LastName'])
+            self._lastNameEditId.SetValue(person['LastName'])
         if 'Email' in person:
-            self._emailEditId.SetLabelText(person['Email'])
+            self._emailEditId.SetValue(person['Email'])
         if 'Phone' in person:
-            self._phoneEditId.SetLabelText(person['Phone'])
+            self._phoneEditId.SetValue(person['Phone'])
 
     def generate_id(self):
         while True:
             num = random.randrange(0, 99999999)
             if num not in self._people.keys():
                 return num
+
+    def print_people_details(self):
+        for id in self._people.keys():
+            print(id)
+            print(self._people[id]['FirstName'])
+            print(self._people[id]['MiddleName'])
+            print(self._people[id]['LastName'])
+            print(self._people[id]['Email'])
+            print(self._people[id]['Phone'])
 
 if __name__ == '__main__':
     # When this module is run (not imported) then create the app, the
