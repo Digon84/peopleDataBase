@@ -10,6 +10,7 @@ unique ID in order to distinguish between entries.
 """
 import wx
 import random
+import re
 
 
 class PeopleDatabase(wx.Frame):
@@ -19,6 +20,7 @@ class PeopleDatabase(wx.Frame):
         # ensure the parent's __init__ is called
         super(PeopleDatabase, self).__init__(*args, **kw)
         self._people = {}
+        self._contentNotSaved = False
 
         # create a panel in the frame
         self._pnl = wx.Panel(self)
@@ -110,6 +112,8 @@ class PeopleDatabase(wx.Frame):
 
         self._addButton.Disable()
         self._updateButton.Enable()
+        #TODO: BUG - save should be also disabled or it will cause crash
+        #       when saving without updating (no **Name field KeyError)
 
     def on_update_button(self, event):
         person_id = int(self._idEditId.GetValue())
@@ -130,10 +134,43 @@ class PeopleDatabase(wx.Frame):
         pass
 
     def on_save_button(self, event):
-        pass
+        with wx.FileDialog(self, "Save pdb file", wildcard="pdb files (*.pdb)|*.pdb",
+                           style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT) as fileDialog:
+            # otherwise ask the user what new file to open
+            if fileDialog.ShowModal() == wx.ID_CANCEL:
+                return  # the user changed their mind
+
+            # save the current contents in the file
+            pathname = fileDialog.GetPath()
+            print pathname
+            try:
+                with open(pathname, 'w') as file:
+                    self.do_save_data(file)
+            except IOError:
+                wx.LogError("Cannot save current data in file '%s'." % pathname)
+            pass
 
     def on_load_button(self, event):
-        self.print_people_details()
+        if self._contentNotSaved:
+            if wx.MessageBox("Current content has not been saved! Proceed?", "Please confirm",
+                             wx.ICON_QUESTION | wx.YES_NO, self) == wx.NO:
+                return
+
+                # otherwise ask the user what new file to open
+        with wx.FileDialog(self, "Open pdb file", wildcard="pdb files (*.pdb)|*.pdb",
+                           style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST) as fileDialog:
+
+            if fileDialog.ShowModal() == wx.ID_CANCEL:
+                return  # the user changed their mind
+
+            # Proceed loading the file chosen by the user
+            pathname = fileDialog.GetPath()
+            try:
+                with open(pathname, 'r') as file:
+                    self.do_load_data(file)
+                    self.set_new_data()
+            except IOError:
+                wx.LogError("Cannot open file '%s'." % pathname)
         pass
 
     def add_person_to_list(self, firstName, lastName):
@@ -154,7 +191,8 @@ class PeopleDatabase(wx.Frame):
 
     def generate_id(self):
         while True:
-            num = random.randrange(0, 99999999)
+            #TODO: BUG - up to 9 digits per ID, should be 8
+            num = random.randrange(100000000, 999999999)
             if num not in self._people.keys():
                 return num
 
@@ -167,6 +205,41 @@ class PeopleDatabase(wx.Frame):
             print(self._people[id]['Email'])
             print(self._people[id]['Phone'])
 
+    def do_save_data(self, file):
+        for id in self._people.keys():
+            file.write("%s**%s**%s**%s**%s**%s**\n"
+                       % (str(id), self._people[id]['FirstName'],
+                       self._people[id]['MiddleName'],
+                       self._people[id]['LastName'],
+                       self._people[id]['Email'],
+                       self._people[id]['Phone']))
+
+    def do_load_data(self, file):
+        self._people = {}
+        for line in file:
+            lineSplit = re.split("\*\*", line, 6)
+            print lineSplit
+            #TODO: BUG - last and first name swapped
+            [id, lastName, middleName, firstName, email, phone, _] = lineSplit
+            self._people[id] = {}
+            self._people[id]['FirstName'] = firstName
+            self._people[id]['MiddleName'] = middleName
+            self._people[id]['LastName'] = lastName
+            self._people[id]['Email'] = email
+            self._people[id]['Phone'] = phone
+        self.print_people_details()
+
+
+    def set_new_data(self):
+        self._peopleList.DeleteAllItems()
+        # TODO: BUG - fields will remember all data, its needed to clear also
+        # details fields
+        for persons_id in self._people.keys():
+            self.add_person_to_list(self._people[persons_id]["FirstName"],
+                                    self._people[persons_id]["LastName"])
+
+
+
 if __name__ == '__main__':
     # When this module is run (not imported) then create the app, the
     # frame, show it, and start the event loop.
@@ -174,4 +247,5 @@ if __name__ == '__main__':
     frm = PeopleDatabase(None, title='peopleFinder', size=wx.Size(627, 350))
     frm.Show()
     app.MainLoop()
+
 
