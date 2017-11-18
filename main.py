@@ -106,6 +106,8 @@ class PeopleDatabase(wx.Frame):
         self.set_person_details_fields(self._people[person_id], person_id)
         self.add_person_to_list(self._people[person_id]['FirstName'],
                                 self._people[person_id]['LastName'])
+        self._people[person_id]["OnList"] = self._peopleList.GetItemCount() - 1
+        print self._people[person_id]["OnList"]
 
         self._peopleList.Focus(self._peopleList.GetItemCount() - 1)
         self._peopleList.Select(self._peopleList.GetItemCount() - 1)
@@ -229,14 +231,17 @@ class PeopleDatabase(wx.Frame):
             self._people[id]['Phone'] = phone
         self.print_people_details()
 
-
     def set_new_data(self):
         self._peopleList.DeleteAllItems()
         # TODO: BUG - fields will remember all data, its needed to clear also
         # details fields
+        onList = 0
         for persons_id in self._people.keys():
             self.add_person_to_list(self._people[persons_id]["FirstName"],
                                     self._people[persons_id]["LastName"])
+            self._people[persons_id]["OnList"] = onList
+            onList = onList + 1
+            print self._people[persons_id]["OnList"]
 
 
 
