@@ -114,7 +114,7 @@ class PeopleDatabase(wx.Frame):
 
         # and a status bar
         self.CreateStatusBar()
-        self.SetStatusText("ver 1.21")
+        self.SetStatusText("ver 1.22")
 
         # Add events to the buttons
         self._pnl.Bind(wx.EVT_BUTTON, self.on_delete_button, self._deleteButton)
@@ -137,12 +137,13 @@ class PeopleDatabase(wx.Frame):
         self.Bind(wx.EVT_CLOSE, self.on_close)
 
     def on_delete_button(self, event):
-        #TODO: BUG - delete only item from list and not from variable
-        selected = self._peopleList.GetFirstSelected()
-        self._peopleList.DeleteItem(selected)
-        # set first as selected
-        self._peopleList.Focus(0)
-        self._peopleList.Select(0)
+    #    #TODO: BUG - delete only item from list and not from variable
+    #    selected = self._peopleList.GetFirstSelected()
+    #    self._peopleList.DeleteItem(selected)
+    #    # set first as selected
+    #    self._peopleList.Focus(0)
+    #    self._peopleList.Select(0)
+        pass
 
 
     def on_add_button(self, event):
@@ -200,33 +201,33 @@ class PeopleDatabase(wx.Frame):
             pass
 
     def on_load_button(self, event):
-        if self._contentNotSaved:
-            if wx.MessageBox("Current content has not been saved! Proceed?", "Please confirm",
-                             wx.ICON_QUESTION | wx.YES_NO, self) == wx.NO:
-                return
+    #    if self._contentNotSaved:
+    #        if wx.MessageBox("Current content has not been saved! Proceed?", "Please confirm",
+    #                         wx.ICON_QUESTION | wx.YES_NO, self) == wx.NO:
+    #            return
 
-                # otherwise ask the user what new file to open
-        with wx.FileDialog(self, "Open pdb file", wildcard="pdb files (*.pdb)|*.pdb",
-                           style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST) as fileDialog:
+    #            # otherwise ask the user what new file to open
+    #    with wx.FileDialog(self, "Open pdb file", wildcard="pdb files (*.pdb)|*.pdb",
+    #                       style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST) as fileDialog:
 
-            if fileDialog.ShowModal() == wx.ID_CANCEL:
-                return  # the user changed their mind
+    #        if fileDialog.ShowModal() == wx.ID_CANCEL:
+    #            return  # the user changed their mind
 
-            # Proceed loading the file chosen by the user
-            pathname = fileDialog.GetPath()
-            try:
-                with open(pathname, 'r') as file:
-                    #TODO: BUG - will crash when opening empty file ;)
-                    self.do_load_data(file)
-                    self.set_new_data()
-                    # set first selected as default
-                    self._peopleList.Focus(0)
-                    self._peopleList.Select(0)
-                    # Update button will get enabled after loading data
-                    # we don't want that
-                    self._updateButton.Disable()
-            except IOError:
-                wx.LogError("Cannot open file '%s'." % pathname)
+    #        # Proceed loading the file chosen by the user
+    #        pathname = fileDialog.GetPath()
+    #        try:
+    #            with open(pathname, 'r') as file:
+    #                #TODO: BUG - will crash when opening empty file ;)
+    #                self.do_load_data(file)
+    #                self.set_new_data()
+    #                # set first selected as default
+    #                self._peopleList.Focus(0)
+    #                self._peopleList.Select(0)
+    #                # Update button will get enabled after loading data
+    #                # we don't want that
+    #                self._updateButton.Disable()
+    #        except IOError:
+    #            wx.LogError("Cannot open file '%s'." % pathname)
         pass
 
     def on_select(self, event):
