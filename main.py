@@ -11,6 +11,30 @@ unique ID in order to distinguish between entries.
 import wx
 import random
 import re
+import sys
+import traceback
+import wx.lib.agw.genericmessagedialog as GMD
+
+def MyExceptionHook(etype, value, trace):
+    frame = wx.GetApp().GetTopWindow()
+    tmp = traceback.format_exception(etype, value, trace)
+    exception = "".join(tmp)
+
+    dlg = ExceptionDialog(exception)
+    dlg.ShowModal()
+    dlg.Destroy()
+
+    frame.Destroy()
+
+
+class ExceptionDialog(GMD.GenericMessageDialog):
+    """"""
+
+    # ----------------------------------------------------------------------
+    def __init__(self, msg):
+        """Constructor"""
+        GMD.GenericMessageDialog.__init__(self, None, msg, "Exception!",
+                                          wx.OK | wx.ICON_ERROR)
 
 
 class PeopleDatabase(wx.Frame):
@@ -19,6 +43,7 @@ class PeopleDatabase(wx.Frame):
     def __init__(self, *args, **kw):
         # ensure the parent's __init__ is called
         super(PeopleDatabase, self).__init__(*args, **kw)
+        sys.excepthook = MyExceptionHook
         self._people = {}
         self._contentNotSaved = False
 
@@ -26,7 +51,8 @@ class PeopleDatabase(wx.Frame):
         self._pnl = wx.Panel(self)
 
         # create a People area
-        self._peopleStaticBox = wx.StaticBox(self._pnl, wx.ID_ANY, "People",
+        #TODO: BUG - spelling People -> Peaple
+        self._peopleStaticBox = wx.StaticBox(self._pnl, wx.ID_ANY, "Peaple",
                                              size=wx.Size(200, 250))
         # people list
         self._peopleList = wx.ListCtrl(self._pnl, size=wx.Size(190, 225),
@@ -59,7 +85,8 @@ class PeopleDatabase(wx.Frame):
 
         # Email
         wx.StaticText(self._pnl, label="Email", pos=(220, 185))
-        self._emailEditId = wx.TextCtrl(self._pnl, pos=(300, 180), size=(300, 25))
+        #TODO: BUG - Mail right-justified
+        self._emailEditId = wx.TextCtrl(self._pnl, pos=(300, 180), size=(300, 25), style = wx.TE_RIGHT)
 
         # Phone
         wx.StaticText(self._pnl, label="Phone", pos=(220, 225))
@@ -87,7 +114,7 @@ class PeopleDatabase(wx.Frame):
 
         # and a status bar
         self.CreateStatusBar()
-        self.SetStatusText("ver 1.1")
+        self.SetStatusText("ver 1.21")
 
         # Add events to the buttons
         self._pnl.Bind(wx.EVT_BUTTON, self.on_delete_button, self._deleteButton)
@@ -96,8 +123,27 @@ class PeopleDatabase(wx.Frame):
         self._pnl.Bind(wx.EVT_BUTTON, self.on_save_button, self._saveButton)
         self._pnl.Bind(wx.EVT_BUTTON, self.on_load_button, self._loadButton)
 
+        # Add events on the textCtrls
+        self._pnl.Bind(wx.EVT_TEXT, self.on_text_change, self._firstNameEditId)
+        self._pnl.Bind(wx.EVT_TEXT, self.on_text_change, self._middleNameEditId)
+        self._pnl.Bind(wx.EVT_TEXT, self.on_text_change, self._lastNameEditId)
+        self._pnl.Bind(wx.EVT_TEXT, self.on_text_change, self._emailEditId)
+        #TODO: BUG - When updating phone field update button will not get enabled
+
+        # Add event to the list
+        self._pnl.Bind(wx.EVT_LIST_ITEM_SELECTED, self.on_select, self._peopleList)
+
+        # Add on close event
+        self.Bind(wx.EVT_CLOSE, self.on_close)
+
     def on_delete_button(self, event):
-        pass
+        #TODO: BUG - delete only item from list and not from variable
+        selected = self._peopleList.GetFirstSelected()
+        self._peopleList.DeleteItem(selected)
+        # set first as selected
+        self._peopleList.Focus(0)
+        self._peopleList.Select(0)
+
 
     def on_add_button(self, event):
         person_id = self.generate_id()
@@ -106,8 +152,8 @@ class PeopleDatabase(wx.Frame):
         self.set_person_details_fields(self._people[person_id], person_id)
         self.add_person_to_list(self._people[person_id]['FirstName'],
                                 self._people[person_id]['LastName'])
+        #TODO: BUG - on add all person details should be cleared
         self._people[person_id]["OnList"] = self._peopleList.GetItemCount() - 1
-        print self._people[person_id]["OnList"]
 
         self._peopleList.Focus(self._peopleList.GetItemCount() - 1)
         self._peopleList.Select(self._peopleList.GetItemCount() - 1)
@@ -129,10 +175,10 @@ class PeopleDatabase(wx.Frame):
         self._peopleList.SetStringItem(selected, 0, self._firstNameEditId.GetValue())
         self._peopleList.SetStringItem(selected, 1, self._lastNameEditId.GetValue())
 
-
         self._updateButton.Disable()
         self._addButton.Enable()
         self._saveButton.Enable()
+        self._contentNotSaved = True
         pass
 
     def on_save_button(self, event):
@@ -144,10 +190,11 @@ class PeopleDatabase(wx.Frame):
 
             # save the current contents in the file
             pathname = fileDialog.GetPath()
-            print pathname
             try:
                 with open(pathname, 'w') as file:
                     self.do_save_data(file)
+                    self._saveButton.Disable()
+                    self._contentNotSaved = False
             except IOError:
                 wx.LogError("Cannot save current data in file '%s'." % pathname)
             pass
@@ -169,11 +216,25 @@ class PeopleDatabase(wx.Frame):
             pathname = fileDialog.GetPath()
             try:
                 with open(pathname, 'r') as file:
+                    #TODO: BUG - will crash when opening empty file ;)
                     self.do_load_data(file)
                     self.set_new_data()
+                    # set first selected as default
+                    self._peopleList.Focus(0)
+                    self._peopleList.Select(0)
+                    # Update button will get enabled after loading data
+                    # we don't want that
+                    self._updateButton.Disable()
             except IOError:
                 wx.LogError("Cannot open file '%s'." % pathname)
         pass
+
+    def on_select(self, event):
+        selected_item = self._peopleList.GetFirstSelected()
+        for person_id in self._people.keys():
+            if selected_item == self._people[person_id]["OnList"]:
+                self.set_person_details_fields(self._people[person_id], person_id)
+                break
 
     def add_person_to_list(self, firstName, lastName):
         self._peopleList.Append([firstName, lastName])
@@ -220,7 +281,6 @@ class PeopleDatabase(wx.Frame):
         self._people = {}
         for line in file:
             lineSplit = re.split("\*\*", line, 6)
-            print lineSplit
             #TODO: BUG - last and first name swapped
             [id, lastName, middleName, firstName, email, phone, _] = lineSplit
             self._people[id] = {}
@@ -229,7 +289,6 @@ class PeopleDatabase(wx.Frame):
             self._people[id]['LastName'] = lastName
             self._people[id]['Email'] = email
             self._people[id]['Phone'] = phone
-        self.print_people_details()
 
     def set_new_data(self):
         self._peopleList.DeleteAllItems()
@@ -241,8 +300,23 @@ class PeopleDatabase(wx.Frame):
                                     self._people[persons_id]["LastName"])
             self._people[persons_id]["OnList"] = onList
             onList = onList + 1
-            print self._people[persons_id]["OnList"]
 
+    def on_text_change(self, event):
+        #TODO: BUG - when ID is empty (starting application without data) changing other fields
+        #will make update button enabled. That can cause a crash when pressing it (no items on list)
+        self._updateButton.Enable()
+
+    def on_close(self, event):
+        if event.CanVeto() and self._contentNotSaved:
+
+            if wx.MessageBox("The file has not been saved... continue closing?",
+                             "Please confirm",
+                             wx.ICON_QUESTION | wx.YES_NO) != wx.YES:
+                event.Veto()
+                return
+
+        self.Destroy()  # you may also do:  event.Skip()
+        # since the default event handler does call Destroy(), too
 
 
 if __name__ == '__main__':
